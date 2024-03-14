@@ -1,6 +1,8 @@
 # pypaste
 A command line tool for formatting python code enabling trouble free pasting into a python interpreter.
 
+![Screenshot](/img/screenshot.png?raw=true)
+
 When you paste code into a python terminal, particularly code containing classes, it can complain about unexpected indents. This tool fixes that problem by parsing python code and returning nicely formatted code that will make your interpreter happy.
 
 
