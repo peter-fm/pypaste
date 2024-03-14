@@ -1,5 +1,5 @@
 # pypaste
-A command line tool for formatting python code enabling trouble free pasting into a python interpreter
+A command line tool for formatting python code enabling trouble free pasting into a python interpreter.
 
 When you paste code into a python terminal, particularly code containing classes, it can complain about unexpected indents. This tool fixes that problem by parsing python code and returning nicely formatted code that will make your interpreter happy.
 
@@ -11,7 +11,9 @@ The tool is designed to be used in conjunction with your favorite text editor pr
 
 1. Add the following line to your ~/.bashrc, ~/.bash_profile or ~/.zshrc file. (You'll need `tmux` if you don't already have it installed.)
 
-`alias hxpython='tmux new-session -d -s helix-target; tmux send-keys -t helix-target ". ./.venv/bin/activate" C-m;tmux send-keys -t helix-target "python" C-m; tmux attach-session -t helix-target'`
+```
+alias hxpython='tmux new-session -d -s helix-target; tmux send-keys -t helix-target ". ./.venv/bin/activate" C-m;tmux send-keys -t helix-target "python" C-m; tmux attach-session -t helix-target'
+```
 
 You will need to refresh your session.
 
@@ -28,7 +30,7 @@ cd pypaste
 cargo build --release
 ```
 
-3. Create a helix keyboard shortcut by adding the following to your ~/.config/helix/config.toml file
+3. Create a helix keyboard shortcut by adding the following to your `~/.config/helix/config.toml` file
 
 ```
 [keys.normal."\\"]
