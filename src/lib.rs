@@ -13,14 +13,17 @@ fn adjust_leading_whitespace(input: &str) -> String {
             }
         })
         .unwrap_or(0);
-
+    let mut adjustment_stopped = false;
     input
         .lines()
         .map(|line| {
-            if line.len() >= leading_whitespace_count {
-                &line[leading_whitespace_count..]
-            } else {
+            if adjustment_stopped
+                || line.chars().take_while(|c| c.is_whitespace()).count() < leading_whitespace_count
+            {
+                adjustment_stopped = true;
                 line
+            } else {
+                &line[leading_whitespace_count..]
             }
         })
         .collect::<Vec<&str>>()
