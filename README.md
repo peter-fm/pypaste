@@ -46,4 +46,19 @@ Using your favorite terminal (I use [wezTerm](https://wezfurlong.org/wezterm/ind
 To send lines from the file to your python REPL select them (e.g. with `x`) then type `\` + `space` and the code will be sent to your REPL having been correctly formatted by pypaste! (Note you must be in normal mode so press `;` first to get back to normal mode if selecting via visual mode).
 
 
+### macOS Issues
 
+In macOS, the above works for small amounts of code but sometimes you can face some weird buffer overflow issues if trying to send a large amount of code in one go. To overcome this you can use pypaste to break the code into smaller chunks and send them directly to the tmux target. For this you can specify the target (`-t`), the buffer size in bytes (`-b`) and the delay between chunks in milliseconds (`-d`). Below is an example of sending the code in 1024 byte chunks with a small 10 millisecond delay between chunks. You may need to try different values until it works.
+
+```
+[keys.normal."\\"]
+space = [":pipe-to /Users/<username>/pypaste/target/release/pypaste -t helix-target:0 -b 1024 -d 10" ]
+```
+If piping is causing you issues as well, you can avoid it altogether by using the clipboard mode via the `-c` flag and changing the shortcut as follows:
+
+```
+[keys.normal."\\"]
+space = [":clipboard-yank", ":run-shell-command /Users/<username>/pypaste/target/release/pypaste -t helix-target:0 -b 1024 -d 10 -c" ]
+```
+
+See `pypaste -help` for more information.
