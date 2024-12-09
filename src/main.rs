@@ -55,8 +55,8 @@ fn main() {
         .unwrap();
     let use_clipboard = matches.is_present("clipboard"); // Check if the flag is present
 
-    let mut ctx = ClipboardContext::new().expect("Failed to create clipboard context");
     let input = if use_clipboard {
+        let mut ctx = ClipboardContext::new().expect("Failed to create clipboard context");
         ctx.get_contents().expect("Failed to read from clipboard")
     } else {
         // If input is piped, read from stdin
