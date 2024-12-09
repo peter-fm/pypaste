@@ -42,9 +42,10 @@ fn main() {
         .get_matches();
 
     let target = matches.value_of("target").unwrap_or("pipe");
+    let default_chunk_size = if cfg!(target_os = "macos") { 900 } else { 1024 };
     let chunk_size = matches
-        .value_of("buffer-size") // Match the name you used in your argument definition
-        .unwrap_or("1024")
+        .value_of("buffer-size")
+        .unwrap_or(&default_chunk_size.to_string())
         .parse::<usize>()
         .unwrap();
     let delay = matches
@@ -79,26 +80,51 @@ fn main() {
 
     let chunks = processed_data.as_bytes().chunks(chunk_size);
 
+    Command::new("stty")
+        .arg("-icanon")
+        .output()
+        .expect("Failed to disable canonical mode");
+
     for chunk in chunks {
         let chunk_str =
             String::from_utf8(chunk.to_vec()).expect("Failed to convert bytes to string");
 
-        let mut child = Command::new("tmux")
-            .args(["load-buffer", "-", ";", "paste-buffer", "-t", target])
-            .stdin(Stdio::piped())
-            .spawn()
-            .expect("Failed to execute tmux command");
+        let mut success = false;
+        let mut attempts = 0;
 
-        {
-            let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-            stdin
-                .write_all(chunk_str.as_bytes())
-                .expect("Failed to write to stdin");
+        while !success && attempts < 3 {
+            // Retry up to 3 times
+            attempts += 1;
+
+            let mut child = Command::new("tmux")
+                .args(["load-buffer", "-", ";", "paste-buffer", "-t", target])
+                .stdin(Stdio::piped())
+                .spawn()
+                .expect("Failed to execute tmux command");
+
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin
+                    .write_all(chunk_str.as_bytes())
+                    .expect("Failed to write to stdin");
+            }
+
+            success = child.wait().expect("tmux command failed to run").success();
+
+            if !success {
+                eprintln!("Retrying chunk due to failure...");
+                thread::sleep(Duration::from_millis(delay * 2)); // Add extra delay on failure
+            }
         }
 
-        child.wait().expect("tmux command failed to run");
+        if !success {
+            eprintln!("Failed to send chunk after multiple attempts.");
+            break;
+        }
 
-        // Introduce a small delay to avoid overwhelming tmux
-        thread::sleep(Duration::from_millis(delay)); // Use delay from args
+        thread::sleep(Duration::from_millis(delay));
     }
+    Command::new("stty")
+        .arg("icanon")
+        .output()
+        .expect("Failed to re-enable canonical mode");
 }
