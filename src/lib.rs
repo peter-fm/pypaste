@@ -34,6 +34,10 @@ pub fn process_string(input: &str) -> String {
     let input = adjust_leading_whitespace(input);
     let mut result = Vec::new();
     let mut previous_line: Option<String> = None;
+
+    let is_ifelse_line =
+        |line: &str| line.trim().starts_with("elif") || line.trim().starts_with("else:");
+
     for line in input.lines() {
         let line = line.replace('\t', "    ");
         if line.trim().is_empty() {
@@ -42,7 +46,9 @@ pub fn process_string(input: &str) -> String {
         if line_starts_with_non_whitespace(&line) && !result.is_empty() {
             if let Some(previous) = previous_line {
                 if !line_starts_with_non_whitespace(previous.as_str()) {
-                    result.push("\n".to_string())
+                    if !is_ifelse_line(line.as_str()) {
+                        result.push("\n".to_string());
+                    }
                 }
             }
         }
