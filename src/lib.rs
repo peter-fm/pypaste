@@ -56,5 +56,6 @@ pub fn process_string(input: &str) -> String {
         result.push(line);
     }
     result.push("".to_string());
+    result.push("".to_string());
     result.join("\n")
 }
