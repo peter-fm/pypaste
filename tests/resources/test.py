@@ -12,7 +12,7 @@ def test():
     print("line3")
 
 
-foo = Foo()
+foo = Foo("demo")
 
 
 foo.run()
