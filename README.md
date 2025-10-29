@@ -81,22 +81,7 @@ return {
     end, { desc = "Start REPL" })
 
     --------------------------------------------------------------------
-    -- 4. Helix-style line selection with `x` / `X`
-    --------------------------------------------------------------------
-    vim.keymap.set("n", "x", function()
-      vim.cmd("normal! V")
-    end, { desc = "Select current line (Helix-style)" })
-
-    vim.keymap.set("v", "x", function()
-      vim.cmd("normal! j")
-    end, { desc = "Expand selection by one line" })
-
-    vim.keymap.set("v", "X", function()
-      vim.cmd("normal! k")
-    end, { desc = "Shrink selection by one line" })
-
-    --------------------------------------------------------------------
-    -- 5. Easier terminal navigation + escape
+    -- 4. Easier terminal navigation + escape
     --------------------------------------------------------------------
     vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, silent = true })
     vim.keymap.set("t", "<C-h>", [[<C-\><C-n><C-w>h]], { noremap = true, silent = true })
