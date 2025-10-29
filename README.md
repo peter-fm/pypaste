@@ -46,6 +46,115 @@ Using your favorite terminal (I use [ghostty](https://ghostty.org)).
 4. To send lines from the file to your python REPL select them (e.g. with `x`) then type `\` + `space` and the code will be sent to your REPL having been correctly formatted by pypaste! (Note you must be in normal mode so press `;` first to get back to normal mode if selecting via visual mode).
 
 
+### Neovim setup
+
+For neovim you can just use the [iron](https://github.com/Vigemus/iron.nvim) repl. After running installing pypaste add this as a plugin:
+
+```
+return {
+  "Vigemus/iron.nvim",
+  config = function()
+    local iron = require("iron.core")
+    local view = require("iron.view")
+    local common = require("iron.fts.common")
+
+    --------------------------------------------------------------------
+    -- 1. Formatter: run code through `pypaste` before sending to REPL
+    --------------------------------------------------------------------
+    local function pypaste_formatter(lines, extras)
+      local input = table.concat(lines, "\n")
+      local out = vim.fn.system({ "pypaste" }, input)
+
+      if vim.v.shell_error ~= 0 then
+        vim.notify("pypaste error:\n" .. out, vim.log.levels.ERROR)
+        return lines
+      end
+
+      -- Split output to lines (pypaste adds a newline itself)
+      local out_lines = vim.split(out, "\n", { plain = true })
+      if out_lines[#out_lines] == "" then
+        table.remove(out_lines)
+      end
+
+      -- Properly wrap with Iron's bracketed paste for Python
+      return common.bracketed_paste_python(out_lines, extras)
+    end
+
+    --------------------------------------------------------------------
+    -- 2. Iron setup
+    --------------------------------------------------------------------
+    iron.setup({
+      config = {
+        repl_definition = {
+          python = {
+            command = { "uv", "run", "python" },
+            format = pypaste_formatter,
+            env = { PYTHON_BASIC_REPL = "1" },
+          },
+        },
+        repl_open_cmd = view.bottom(40),
+      },
+      keymaps = {
+        toggle_repl = "<leader>rr",
+        send_line = "<leader>rl",
+        visual_send = "<leader>rs",
+        send_file = "<leader>rf",
+        clear = "<leader>rc",
+      },
+    })
+
+    --------------------------------------------------------------------
+    -- 3. Fallback REPL starter (if filetype is empty)
+    --------------------------------------------------------------------
+    vim.keymap.set("n", "<leader>rr", function()
+      local ft = (vim.bo.filetype ~= "" and vim.bo.filetype) or "python"
+      require("iron.core").repl_for(ft)
+    end, { desc = "Start REPL" })
+
+    --------------------------------------------------------------------
+    -- 4. Helix-style line selection with `x` / `X`
+    --------------------------------------------------------------------
+    vim.keymap.set("n", "x", function()
+      vim.cmd("normal! V")
+    end, { desc = "Select current line (Helix-style)" })
+
+    vim.keymap.set("v", "x", function()
+      vim.cmd("normal! j")
+    end, { desc = "Expand selection by one line" })
+
+    vim.keymap.set("v", "X", function()
+      vim.cmd("normal! k")
+    end, { desc = "Shrink selection by one line" })
+
+    --------------------------------------------------------------------
+    -- 5. Easier terminal navigation + escape
+    --------------------------------------------------------------------
+    vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, silent = true })
+    vim.keymap.set("t", "<C-h>", [[<C-\><C-n><C-w>h]], { noremap = true, silent = true })
+    vim.keymap.set("t", "<C-j>", [[<C-\><C-n><C-w>j]], { noremap = true, silent = true })
+    vim.keymap.set("t", "<C-k>", [[<C-\><C-n><C-w>k]], { noremap = true, silent = true })
+    vim.keymap.set("t", "<C-l>", [[<C-\><C-n><C-w>l]], { noremap = true, silent = true })
+  end,
+}
+```
+
+#### Keyboard shortcuts
+
+
+| Action                | Keys            | Result                        |
+| --------------------- | --------------- | ----------------------------- |
+| Start REPL            | `Space r r`     | Opens `uv run python` split   |
+| Send current line     | `Space r l`     | Runs through `pypaste`, sends |
+| Send visual selection | `Space r s`     | Same (via `pypaste`)          |
+| Send entire file      | `Space r f`     | Same                          |
+| Clear REPL            | `Space r c`     | Clears REPL screen            |
+| Select line           | `x`             | Start visual line mode        |
+| Expand selection      | press `x` again | Add another line              |
+| Shrink selection      | `X`             | Remove a line                 |
+| Move between splits   | `<C-h/j/k/l>`   | Works even from inside REPL   |
+| Exit REPL typing mode | `<Esc>`         | Easy escape                   |
+
+
 ### macOS Issues
 
 In macOS, the above works for small amounts of code but sometimes you can face some weird buffer overflow issues if trying to send a large amount of code in one go. To overcome this you can use pypaste to break the code into smaller chunks and send them directly to the tmux target. For this you can specify the target (`-t`), the buffer size in bytes (`-b`) and the delay between chunks in milliseconds (`-d`). Below is an example of sending the code in 1024 byte chunks with a small 10 millisecond delay between chunks. You may need to try different values until it works.
